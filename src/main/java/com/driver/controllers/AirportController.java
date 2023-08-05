@@ -18,10 +18,8 @@ import java.util.Objects;
 @RestController
 public class AirportController {
 
-    @Autowired
-    AirportService service;
-    @Autowired
-    AirportRepository repo;
+    AirportRepository repo = new AirportRepository();
+    AirportService service = new AirportService();
 
     ///1
     @PostMapping("/add_airport")
