@@ -13,8 +13,8 @@ import java.util.List;
 @Service
 public class AirportService {
 
-    @Autowired
-    AirportRepository repo;
+
+    AirportRepository repo = new AirportRepository();
 
     ///4
     public String bookflight(int fid , int pid){

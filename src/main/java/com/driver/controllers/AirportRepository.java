@@ -38,6 +38,10 @@ public class AirportRepository {
     ///2
     public String addFlight(Flight f1){
 
+//        if (f1 == null) {
+//           return null;
+//        }
+
         int a1 = f1.getFlightId();
 
         FlightInfo.put(a1,f1);
