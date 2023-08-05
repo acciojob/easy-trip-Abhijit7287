@@ -8,77 +8,62 @@ import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Repository
-public class AirportRepository {
+ class TripRepository
+{
+    private Map<String, Airport> airportMap=new HashMap<>();
+    private Map<Integer, Flight>flightMap=new HashMap<>();
+
+    private Map<Integer, Passenger>passengerMap=new HashMap<>();
+
+    private Map<Integer, List<Passenger>>flightPassangerMap=new HashMap<>();
 
 
-    HashMap<String,Airport> AirportRepo = new HashMap<>();
+    private Map<Integer,List<Flight>>bookedFlightByPassanger=new HashMap<>();
 
-    HashMap<Integer,Flight> FlightInfo = new HashMap<>();
-
-    HashMap<Integer,Passenger> PassengerInfo = new HashMap<>();
-
-    HashMap<Integer,List<Integer>> BookingRepo = new HashMap<>();
-
-    HashMap<Integer,List<Integer>> NoOfPassengeresInFlight = new HashMap<>();
-
-
-    ///1
-    public String addAirport(Airport a1){
-
-        String name = a1.getAirportName();
-
-        AirportRepo.put(name,a1);
-
-        return "SUCCESS";
-
+    public Map<Integer, List<Flight>> getBookedFlightByPassanger()
+    {
+        return bookedFlightByPassanger;
     }
 
-    ///2
-    public String addFlight(Flight f1){
-
-//        if (f1 == null) {
-//           return null;
-//        }
-
-        int a1 = f1.getFlightId();
-
-        FlightInfo.put(a1,f1);
-        NoOfPassengeresInFlight.put(a1,new ArrayList<>());
-
-        return "SUCCESS";
+    public Map<Integer, List<Passenger>> getFlightPassangerMap()
+    {
+        return flightPassangerMap;
     }
 
-    ///3
-    public String addPassenger(Passenger p1){
-
-        int a1 = p1.getPassengerId();
-
-        PassengerInfo.put(a1,p1);
-        BookingRepo.put(a1,new ArrayList<>());
-
-        return "SUCCESS";
+    public void setFlightPassangerMap(Map<Integer, List<Passenger>> flightPassangerMap) {
+        this.flightPassangerMap = flightPassangerMap;
     }
 
-
-    public HashMap<String, Airport> getAirportRepo() {
-        return AirportRepo;
+    public Map<Integer, Passenger> getPassengerMap()
+    {
+        return passengerMap;
     }
 
-    public HashMap<Integer, Flight> getFlightInfo() {
-        return FlightInfo;
+    public void setPassengerMap(Map<Integer, Passenger> passengerMap) {
+        this.passengerMap = passengerMap;
     }
 
-    public HashMap<Integer, Passenger> getPassengerInfo() {
-        return PassengerInfo;
+    public Map<Integer, Flight> getFlightMap()
+    {
+        return flightMap;
     }
 
-    public HashMap<Integer, List<Integer>> getBookingRepo() {
-        return BookingRepo;
+    public void setFlightMap(Map<Integer, Flight> flightMap)
+    {
+        this.flightMap = flightMap;
     }
 
-    public HashMap<Integer, List<Integer>> getNoOfPassengeresInFlight() {
-        return NoOfPassengeresInFlight;
+    public Map<String, Airport> getAirportMap()
+    {
+        return airportMap;
     }
+
+    public void setAirportMap(Map<String, Airport> airportMap)
+    {
+        this.airportMap = airportMap;
+    }
+
 }

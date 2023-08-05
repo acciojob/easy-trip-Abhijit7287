@@ -3,228 +3,228 @@ package com.driver.controllers;
 import com.driver.model.Airport;
 import com.driver.model.City;
 import com.driver.model.Flight;
+import com.driver.model.Passenger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @Service
-public class AirportService {
+ class TripService
+{
+    @Autowired
+    private TripRepository tripRepository=new TripRepository();
 
-
-    AirportRepository repo = new AirportRepository();
-
-    ///4
-    public String bookflight(int fid , int pid){
-
-        HashMap<Integer,List<Integer>> bookRepo = repo.getBookingRepo();
-        HashMap<Integer,List<Integer>> addPass = repo.getNoOfPassengeresInFlight();
-        HashMap<Integer,Flight> flightinfo = repo.getFlightInfo();
-
-        Flight f = flightinfo.get(fid);
-        List<Integer> l2 = addPass.get(fid);
-        List<Integer> l1 = bookRepo.get(pid);
-
-        if(l2.size()==f.getMaxCapacity()){
-            return "FAILURE";
-        }
-
-        for(int i=0;i<l1.size();i++){
-            if(l1.get(i)==fid){
-                return "FAILURE";
-            }
-        }
-
-        ///booking flight for passenger
-        l1.add(fid);
-        bookRepo.put(pid,l1);
-
-        ///adding passengers on flight
-        l2.add(pid);
-        addPass.put(fid,l2);
-
-        return "SUCCESS";
-
+    public void addAirPort(Airport airport)
+    {
+        Map<String,Airport> map=tripRepository.getAirportMap();
+        map.put(airport.getAirportName(),airport);
     }
 
-    ///5
-    public String CancleTicket(int fid , int pid){
-
-        HashMap<Integer,List<Integer>> bookRepo = repo.getBookingRepo();
-        HashMap<Integer,List<Integer>> addPass = repo.getNoOfPassengeresInFlight();
-        HashMap<Integer,Flight> flightinfo = repo.getFlightInfo();
-
-        ///if flightid is wrong or not present in flightinfo
-        if(flightinfo.containsKey(fid)==false){
-            return "FAILURE";
+    public String getLargestAirPort()
+    {
+        Map<String,Airport> map=tripRepository.getAirportMap();
+        if(map.size()==0)return "";
+        List<String>airList=new ArrayList<>();
+        int max=0;
+        for(Airport a:map.values())
+        {
+            if(a.getNoOfTerminals()>max)max=a.getNoOfTerminals();
         }
 
-        List<Integer> l1 = bookRepo.get(pid);
-        int count=0;
-
-        ///checking if that flight is there in passengers booking list
-        for(int i=0;i<l1.size();i++){
-            if(l1.get(i)==fid){
-               count++;
-            }
+        for(Airport a:map.values())
+        {
+            if(a.getNoOfTerminals()==max)airList.add(a.getAirportName());
         }
-        if(count==0){
-            return "FAILURE";
-        }
-
-        ///removing from addpass
-        List<Integer> l2 = addPass.get(fid);
-        for(int i=0;i<l2.size();i++){
-            if(l2.get(i)==pid){
-              l2.remove(i);
-              break;
-            }
-        }
-        addPass.put(fid,l2);
-
-        ///removing flight from passengers list
-        for(int i=0;i<l1.size();i++){
-            if(l1.get(i)==fid){
-               l1.remove(i);
-            }
-        }
-        bookRepo.put(pid,l1);
-
-        return "SUCCESS";
+        return airList.size()==1?airList.get(0):lexographically(airList);
     }
 
-    ///6
-    public String getLargestAirport(){
-
-        HashMap<String,Airport> airRepo = repo.getAirportRepo();
-
-        int size = Integer.MIN_VALUE;
-
-        String s = "";
-
-        for(String key : airRepo.keySet()){
-            Airport a = airRepo.get(key);
-
-            if(a.getNoOfTerminals()>size){
-                s = a.getAirportName();
-            }
-            else if(a.getNoOfTerminals()==size){
-
-                String str = a.getAirportName();
-
-                int result = str.compareTo(s);
-
-                if(result<0){
-                    s = str;
-                }
-            }
+    public String lexographically(List<String>list)
+    {
+        String pans=list.get(0);
+        for(String s:list){
+            if(s.compareToIgnoreCase(pans)<0)pans=s;
         }
-
-        return s;
+        return pans;
     }
 
-    ///7
-    public double getShortestTime(City from , City to){
+    public double getShortestDurationOfPossibleBetweenTwoCities(City fromCity,City toCity)
+    {
+        Map<Integer, Flight>flightMap=tripRepository.getFlightMap();
 
-        HashMap<Integer,Flight> flightinfo = repo.getFlightInfo();
+        //List of the Flights.. flight from
+        List<Flight>flights=new ArrayList<>();
 
-        double ans = Integer.MAX_VALUE;
-
-        for(int key : flightinfo.keySet()){
-            Flight f = flightinfo.get(key);
-
-            if(f.getFromCity().equals(from) && f.getToCity().equals(to) && f.getDuration()<ans){
-                ans = f.getDuration();
+        for(Flight flight:flightMap.values())
+        {
+            if(flight.getFromCity()==fromCity && flight.getToCity()==toCity)
+            {
+                flights.add(flight);
             }
         }
-
-        return ans==Integer.MAX_VALUE?-1:ans;
+        if(flights.size()==0)return -1;
+        return shortest(flights);
     }
 
-    ///8
-    public int getNoOfPeoples(Date d1 , String Airportname){
-
-        HashMap<String,Airport> airRepo = repo.getAirportRepo();
-        Airport a1 = airRepo.get(Airportname);
-
-        City c1 = a1.getCity();
-
-        HashMap<Integer,List<Integer>> addPass = repo.getNoOfPassengeresInFlight();
-        HashMap<Integer,Flight> flightinfo = repo.getFlightInfo();
-
-        int ans =0;
-
-        for(int key : addPass.keySet()){
-
-            Flight f1  = flightinfo.get(key);
-
-            if(f1.getToCity().equals(c1) || f1.getFromCity().equals(c1)){
-                ans += addPass.get(key).size();
-            }
+    public double shortest(List<Flight>flights)
+    {
+        double ans=Double.MAX_VALUE;
+        for(Flight f:flights){
+            if(f.getDuration()<ans)ans=f.getDuration();
         }
-
         return ans;
     }
 
-    ///9
-    public int calculateFare(int fid){
-
-        HashMap<Integer,List<Integer>> addPass = repo.getNoOfPassengeresInFlight();
-
-        int no = addPass.get(fid).size();
-
-        return 3000 + no*50;
-
-    }
-    ///10
-    public int getCountOfBookings(int pid){
-
-        HashMap<Integer,List<Integer>> bookRepo = repo.getBookingRepo();
-
-        return bookRepo.get(pid).size();
+    public String addFlight(Flight flight)
+    {
+        Map<Integer,Flight> flightMap=tripRepository.getFlightMap();
+        flightMap.put(flight.getFlightId(),flight);
+        return "SUCCESS";
     }
 
-    ///11
-    public String getAirportName(int fid){
+    public  String bookATicket(Integer flightId,Integer passangerId)
+    {
 
-        HashMap<Integer,Flight> flightinfo = repo.getFlightInfo();
-        HashMap<String,Airport> airRepo = repo.getAirportRepo();
+        //If the numberOfPassengers who have booked the flight is greater than : maxCapacity, in that case :
+        //return a String "FAILURE"
+        //Also if the passenger has already booked a flight then also return "FAILURE".
+        //else if you are able to book a ticket then return "SUCCESS"
+        Map<Integer,List<Passenger>> flightPassangerMap=tripRepository.getFlightPassangerMap();
 
-        if(flightinfo.containsKey(fid)==false){
-            return null;
-        }
-        Flight f1 = flightinfo.get(fid);
+        List<Passenger>list=flightPassangerMap.getOrDefault(flightId,new ArrayList<>());
 
-        City c1 = f1.getFromCity();
+        Map<Integer,Flight>flightMap=tripRepository.getFlightMap();
+        if(flightMap.get(flightId).getMaxCapacity()<=list.size())return "FAILURE";
 
-        for(String key : airRepo.keySet()){
 
-            Airport a1 = airRepo.get(key);
-
-            if(a1.getCity().equals(c1)){
-                return a1.getAirportName();
+        Map<Integer,List<Flight>>bookedFlightByPassanger=tripRepository.getBookedFlightByPassanger();
+        /*
+         *It may fail... when passenger has already booked a tiket..
+         */
+        if(bookedFlightByPassanger.containsKey(passangerId))
+        {
+            //this means passengers has already booked the ticket..
+            //List of the passenger.. for this flight..
+            List<Passenger> tempList=flightPassangerMap.get(flightId);
+            for(Passenger p:tempList)
+            {
+                if(passangerId.equals(p.getPassengerId()))return "Failure";
             }
         }
 
+
+        Map<Integer,Passenger>passengerMap=tripRepository.getPassengerMap();
+        list.add(passengerMap.get(passangerId));
+
+        flightPassangerMap.put(flightId,list);
+
+        return "SUCCESS";
+    }
+
+    public String cancelATicket(Integer flightId,Integer passengerId)
+    {
+        //If the passenger has not booked a ticket for that flight or the flightId is invalid or in any other failure case
+        // then return a "FAILURE" message
+        // Otherwise return a "SUCCESS" message
+        // and also cancel the ticket that passenger had booked earlier on the given flightId
+        Map<Integer,Flight>flightMap=tripRepository.getFlightMap();
+        if(flightMap.containsKey(flightId))return "FAILURE";
+
+        Map<Integer,Passenger>passengerMap=tripRepository.getPassengerMap();
+        if(!passengerMap.containsKey(passengerId))return "FAILURE";
+        //this shows booked Flight by passanger..
+        Map<Integer,List<Flight>>bookedFlightByPassanger=tripRepository.getBookedFlightByPassanger();
+
+        if(!bookedFlightByPassanger.containsKey(passengerId))return "FAILURE";
+        List<Flight>flightList= bookedFlightByPassanger.get(passengerId);
+        Flight flightToRemove=flightMap.get(flightId);
+        flightList.remove(flightToRemove);
+
+        Map<Integer, List<Passenger>>flightPassangerMap=tripRepository.getFlightPassangerMap();
+
+        //I'll have to remove the from the flightPassanger Map..
+        List<Passenger>list=flightPassangerMap.get(flightId);
+        list.remove(passengerMap.get(passengerId));
+
+        return "SUCCESS";
+    }
+
+
+    public String addPassenger(Passenger passenger){
+        Map<Integer,Passenger>passengerMap=tripRepository.getPassengerMap();
+        passengerMap.put(passenger.getPassengerId(),passenger);
+        return "SUCCESS";
+    }
+
+    public int getNumberOfPeopleOn(Date date,String airportName)
+    {
+        Map<Integer, List<Passenger>>flightPassangerMap=tripRepository.getFlightPassangerMap();
+        Map<Integer, Flight>flightMap=tripRepository.getFlightMap();
+        Map<String, Airport> airportMap=tripRepository.getAirportMap();
+
+        int count=0;
+        for(Integer flightId:flightPassangerMap.keySet())
+        {
+            if((flightMap.get(flightId).getFromCity().equals(airportMap.get(airportName).getCity()) || flightMap.get(flightId).getToCity().equals(airportMap.get(airportName).getCity())) && !flightMap.get(flightId).getFlightDate().before(date)&& !flightMap.get(flightId).getFlightDate().after(date))
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+
+
+    public int calculateFare(Integer flightId)
+    {
+        //Calculation of flight prices is a function of number of people who have booked the flight already.
+        //Price for any flight will be : 3000 + noOfPeopleWhoHaveAlreadyBooked*50
+        //Suppose if 2 people have booked the flight already : the price of flight for the third person will be 3000 + 2*50 = 3100
+        //This will not include the current person who is trying to book, he might also be just checking price
+        Map<Integer, List<Passenger>>flightPassangerMap=tripRepository.getFlightPassangerMap();
+        int totaFare=3000;
+        totaFare+=flightPassangerMap.get(flightId).size()*50;
+        return totaFare;
+    }
+
+    public int countOfBookingsDoneByPassengerAllCombined(Integer passengerId)
+    {
+        Map<Integer,List<Flight>>bookedFlightByPassanger=tripRepository.getBookedFlightByPassanger();
+        if(bookedFlightByPassanger.containsKey(passengerId)==false)return 0;
+        return bookedFlightByPassanger.get(passengerId).size();
+    }
+
+    public String getAirportNameFromFlightId(Integer flightId){
+        if(flightId==null)return null;
+
+        Flight ans=null;
+        Map<Integer, Flight>flightMap=tripRepository.getFlightMap();
+        ans=flightMap.get(flightId);
+
+        if(ans==null)return null;
+        City city=ans.getFromCity();
+
+        Map<String, Airport> airportMap=tripRepository.getAirportMap();
+        for(Airport airport:airportMap.values()){
+            if(airport.getCity()==city)return airport.getAirportName();
+        }
         return null;
     }
 
-    ///12
-    public int calculateTotalFare(int fid){
 
-        HashMap<Integer,List<Integer>> addPass = repo.getNoOfPassengeresInFlight();
-
-        List<Integer> list = addPass.get(fid);
-
-        int ans =0;
-
-        for(int i=0;i<list.size();i++){
-            ans+=3000+i*50;
+    public int calculateRevenueOfAFlight(Integer flightId)
+    {
+        //Calculate the total revenue that a flight could have
+        //That is of all the passengers that have booked a flight till now and then calculate the revenue
+        //Revenue will also decrease if some passenger cancels the flight
+        Map<Integer, List<Passenger>>flightPassangerMap=tripRepository.getFlightPassangerMap();
+        List<Passenger>passengerList=flightPassangerMap.getOrDefault(flightId,new ArrayList<>());
+        if(passengerList.size()==0)return 0;
+        int totalRevenue=0;
+        for(int i=0;i<passengerList.size();i++)
+        {
+            totalRevenue+=(3000+i*50);
         }
+        return totalRevenue;
 
-        return ans;
     }
-
 }
